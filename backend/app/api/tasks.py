@@ -8,6 +8,7 @@ from datetime import datetime
 
 from app.db.session import get_db
 from app.db.models import Task, TaskStatus, Evidence
+from app.api.admin import verify_admin_auth
 
 router = APIRouter()
 
@@ -79,7 +80,13 @@ async def get_task(task_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.patch("/{task_id}", response_model=TaskOut)
-async def update_task(task_id: int, update: TaskUpdate, db: AsyncSession = Depends(get_db)):
+async def update_task(
+    task_id: int,
+    update: TaskUpdate,
+    db: AsyncSession = Depends(get_db),
+    # shortcut: shared demo token, not per-user auth; add real login before real families use it.
+    _: None = Depends(verify_admin_auth),
+):
     task = await db.get(Task, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")

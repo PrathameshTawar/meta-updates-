@@ -335,3 +335,43 @@ async def test_parent_notification_on_task_done():
     # Should execute without errors even in simulated test environment
     await notify_parents_task_done(t, completed_by_name="अमित")
 
+
+
+@pytest.mark.asyncio
+async def test_verify_accepts_devanagari_digit_quote():
+    """A Marathi quote written in Devanagari digits must verify against an ASCII amount."""
+    future = (get_current_ist_datetime() + timedelta(days=10)).strftime("%Y-%m-%d")
+    raw = f"रोहन, महावितरणचे वीज बिल आले आहे. रक्कम ₹१,८४० आहे. Due {future}"
+    state: AgentState = {
+        "raw_text": raw,
+        "extracted": {
+            "amount": {"value": "₹1,840", "quote": "₹१,८४०"},
+            "payee": {"value": "Mahavitaran", "quote": "महावितरण"},
+            "due_date": {"value": future, "quote": future},
+        },
+        "confidence": 0.9,
+    }
+    v_res = await node_verify(state)
+    assert v_res["verify_passed"] is True, v_res["verify_failures"]
+
+
+@pytest.mark.asyncio
+async def test_verify_flags_missing_quote():
+    """A field with a value but no source quote must not pass verification."""
+    state: AgentState = {
+        "raw_text": "Mahavitaran Bill Amount ₹1,500",
+        "extracted": {"amount": {"value": "₹1,500", "quote": None}},
+        "confidence": 0.9,
+    }
+    v_res = await node_verify(state)
+    assert v_res["verify_passed"] is False
+    assert any("no source quote" in f for f in v_res["verify_failures"])
+
+
+@pytest.mark.asyncio
+async def test_dedupe_matches_devanagari_and_decimal_amounts():
+    """₹१,८४० (Marathi voice note) and Rs. 1,840.00 (bill photo) are the same bill."""
+    base = {"payee": {"value": "महावितरण"}, "due_date": {"value": "2026-11-03"}}
+    d_mar = await node_deduplicate({"household_id": 1, "extracted": {**base, "amount": {"value": "₹१,८४०"}}})
+    d_eng = await node_deduplicate({"household_id": 1, "extracted": {**base, "amount": {"value": "Rs. 1,840.00"}}})
+    assert d_mar["dedupe_key"] == d_eng["dedupe_key"]

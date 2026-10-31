@@ -25,10 +25,10 @@ Many Indian earners run two households from one phone while their parents, in an
 
 | Model | Provider / Endpoint | Role in Saath |
 | :--- | :--- | :--- |
-| **Muse Voice Transcribe (`muse-voice-transcribe-1.0`)** | Baseten / Meta Model API (`POST /v1/asr/transcribe`) | Transcribes Marathi and Hindi voice notes (16 kHz mono WAV). |
-| **Muse Spark Open (`meta-models/muse-spark-open-1026`)** | Baseten / Meta Model API (`POST /v1/chat/completions`) | Reads bill photos, classifies each message, extracts fields with source quotes, answers "what's the status?" questions, and drafts Marathi replies to parents. |
+| **Muse Voice Transcribe (`muse-voice-transcribe-1.0`)** | Meta Model API (`POST /v1/asr/transcribe`) | Transcribes Marathi and Hindi voice notes (16 kHz mono WAV). |
+| **Muse Spark (`muse-spark-1.3`)** | Meta Model API (`POST /v1/chat/completions`) | Reads bill photos, classifies each message, extracts fields with source quotes, answers "what's the status?" questions, and drafts Marathi replies to parents. |
 
-*API endpoints and model names are configurable via `.env` (`LLM_BASE_URL`, `LLM_API_KEY`, `MUSE_SPARK_MODEL`, `MUSE_VOICE_MODEL`).*
+*The defaults point at `https://api.meta.ai/v1`. To use Baseten instead, set `LLM_BASE_URL=https://inference.baseten.co/v1` and `MUSE_SPARK_MODEL=meta-models/muse-spark-open-1026`. Endpoints and model names are configurable via `.env` (`LLM_BASE_URL`, `LLM_API_KEY`, `MUSE_SPARK_MODEL`, `MUSE_VOICE_MODEL`).*
 
 ## Evaluation (40 items, 35 test cases)
 
@@ -52,7 +52,7 @@ Parent Voice / Photo (WhatsApp / Telegram)
    [ Ingest ]
         │
         ▼
-   [ Perceive ] ──► Meta Muse Spark Open (OCR & Multimodal Audio)
+   [ Perceive ] ──► Muse Spark (OCR) / Muse Voice Transcribe (audio)
         │
         ▼
    [ Classify ] ──► Medical Document / Lab Report?
@@ -97,7 +97,8 @@ When a task is claimed and finished by a child via WhatsApp quick-reply buttons 
 
 ### Source quotes for every field
 Every field the agent extracts must come with the exact substring it was read from. Plain code (not the model) checks each quote:
-- If a quote does not exist character-for-character in the raw text, the field is discarded (`null`).
+- If a field has no quote, or its quote is not in the raw text character for character, verification fails and the task waits for the family to confirm it.
+- Amounts are compared as numbers, so a Marathi quote in Devanagari digits (`₹१,८४०`) matches an extracted `₹1,840`.
 - Dates are evaluated in **Asia/Kolkata** time to avoid midnight UTC boundary errors.
 - Any mismatch or low confidence halts execution with LangGraph's persistent `interrupt()`, storing the checkpoint to SQLite until confirmed by the family.
 
@@ -144,7 +145,7 @@ npm install
 echo NEXT_PUBLIC_ADMIN_TOKEN=saath_admin_secret_demo > .env.local
 npm run dev
 ```
-The token must match the backend's `ADMIN_SECRET`. Without it, the Simulate, Skip 3 days and reset buttons get a 401.
+The token must match the backend's `ADMIN_SECRET`. Without it, the Simulate, Skip 3 days and reset buttons and Claim / Mark done on the board get a 401.
 
 #### Benchmark
 ```bash
