@@ -44,11 +44,11 @@ export function TaskDetailPanel({ task, members, onClose }: TaskDetailPanelProps
   const activeEvidence = task.evidence_items.find((e) => e.field_name === activeField);
 
   return (
-    <aside className="w-[380px] flex-shrink-0 border-l border-gray-200 bg-white flex flex-col h-full overflow-hidden">
+    <aside className="fixed inset-0 z-40 w-full sm:static sm:z-auto sm:w-[380px] flex-shrink-0 border-l border-gray-200 bg-white flex flex-col h-full overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <h2 className="text-sm font-semibold text-gray-800 line-clamp-1">{task.title}</h2>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
+        <button onClick={onClose} aria-label="Close details" className="text-gray-400 hover:text-gray-700 transition-colors">
           <X size={18} />
         </button>
       </div>
@@ -57,7 +57,7 @@ export function TaskDetailPanel({ task, members, onClose }: TaskDetailPanelProps
         {/* Fields with evidence */}
         <section>
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
-            Extracted Fields
+            What the agent read
           </p>
           <div className="space-y-2">
             {(["amount", "due_date", "payee"] as const).map((field) => {
@@ -83,7 +83,7 @@ export function TaskDetailPanel({ task, members, onClose }: TaskDetailPanelProps
                     <span className="text-xs text-gray-500">{FIELD_LABELS[field]}</span>
                     {evidence && (
                       <span className="text-[10px] text-brand-600 font-medium">
-                        {isActive ? "▲ Hide quote" : "▼ Show quote"}
+                        {isActive ? "Hide source" : "Show source"}
                       </span>
                     )}
                   </div>
@@ -108,7 +108,7 @@ export function TaskDetailPanel({ task, members, onClose }: TaskDetailPanelProps
         {task.evidence_items.length > 0 && (
           <section>
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
-              All Evidence ({task.evidence_items.length})
+              All source quotes ({task.evidence_items.length})
             </p>
             <div className="space-y-2">
               {task.evidence_items.map((ev) => (

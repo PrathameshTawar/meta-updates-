@@ -57,7 +57,7 @@ export function TaskCard({ task, members, isSelected, onClick }: TaskCardProps) 
       className={clsx(
         "task-card w-full text-left transition-all",
         isSelected && "ring-2 ring-brand-500",
-        task.status === "escalated" && "border-red-400 bg-red-50/30 ring-1 ring-red-400/50 shadow-xs",
+        task.status === "escalated" && "border-red-400 bg-red-50/30 ring-1 ring-red-400/50 shadow-sm",
         overdue && task.status !== "escalated" && "border-red-300"
       )}
     >
@@ -72,6 +72,7 @@ export function TaskCard({ task, members, isSelected, onClick }: TaskCardProps) 
           {CATEGORY_LABELS[task.category] ?? task.category}
         </span>
         <span
+          aria-hidden="true"
           className={clsx(
             "w-2 h-2 rounded-full mt-1 flex-shrink-0",
             STATUS_DOT[task.status] ?? "bg-gray-300"
@@ -101,7 +102,7 @@ export function TaskCard({ task, members, isSelected, onClick }: TaskCardProps) 
           >
             <Calendar size={11} />
             {format(dueDate, "dd MMM")}
-            {overdue && " ⚠"}
+            {overdue && " · overdue"}
           </span>
         )}
         {hasEvidence && (
@@ -119,7 +120,7 @@ export function TaskCard({ task, members, isSelected, onClick }: TaskCardProps) 
         {task.status === "escalated" && (
           <span className="flex items-center gap-0.5 text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded text-[10px]">
             <AlertCircle size={10} />
-            ESCALATED
+            Escalated
           </span>
         )}
       </div>

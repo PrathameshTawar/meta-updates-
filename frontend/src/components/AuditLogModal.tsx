@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getEvents, EventItem } from "@/lib/api";
 import { format, parseISO } from "date-fns";
-import { X, ShieldCheck, Activity, Bot, AlertTriangle, RefreshCw } from "lucide-react";
+import { X, Activity, RefreshCw } from "lucide-react";
+import { useEffect } from "react";
 import clsx from "clsx";
 
 interface AuditLogModalProps {
@@ -20,10 +21,17 @@ export function AuditLogModal({ householdId, isOpen, onClose }: AuditLogModalPro
     refetchInterval: isOpen ? 3000 : false,
   });
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div role="dialog" aria-modal="true" aria-labelledby="audit-title" className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden border border-gray-100">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -32,20 +40,22 @@ export function AuditLogModal({ householdId, isOpen, onClose }: AuditLogModalPro
               <Activity size={18} />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-gray-900">Agent Decision Audit Log</h2>
-              <p className="text-xs text-gray-500">Append-only record of all perception, verification & guardrails</p>
+              <h2 id="audit-title" className="text-base font-semibold text-gray-900">Audit log</h2>
+              <p className="text-xs text-gray-500">Each step the agent took, newest first. Entries are never edited.</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => refetch()}
               className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Refresh events"
+              title="Refresh"
+              aria-label="Refresh audit log"
             >
               <RefreshCw size={16} />
             </button>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <X size={18} />
@@ -56,7 +66,7 @@ export function AuditLogModal({ householdId, isOpen, onClose }: AuditLogModalPro
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-3">
           {isLoading && (
-            <div className="text-center py-8 text-gray-400 text-sm">Loading audit events…</div>
+            <div className="text-center py-8 text-gray-400 text-sm">Loading…</div>
           )}
 
           {!isLoading && events.length === 0 && (
@@ -113,11 +123,7 @@ export function AuditLogModal({ householdId, isOpen, onClose }: AuditLogModalPro
 
         {/* Footer */}
         <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-xs text-gray-500">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck size={14} className="text-emerald-600" />
-            Meta LLM Hackathon Verification Audit Trail
-          </span>
-          <span>{events.length} decisions logged</span>
+          <span>{events.length} events</span>
         </div>
       </div>
     </div>
