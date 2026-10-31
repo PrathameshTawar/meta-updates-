@@ -1,44 +1,36 @@
-# Saath (साथ) — Family Coordination Agent
+# Saath (साथ): family coordination agent
 
 > **Meta Global AI Developer Hackathon 2026** · Oct 27 – Nov 4, 2026  
 > **Track:** Build for Your World  
 > **Repository:** [https://github.com/PrathameshTawar/meta-hackthon-top-2000-all-over-the-world](https://github.com/PrathameshTawar/meta-hackthon-top-2000-all-over-the-world)  
 
-**Saath** ("साथ", *together*) turns an ageing parent's voice notes and document photos into a verified, shared task board for adult children managing family obligations from other cities.
+Saath ("साथ", *together*) turns an ageing parent's voice notes and bill photos into a shared task board for their adult children, who often live in other cities.
 
-A parent sends a Marathi or Hindi voice note or bill photo over WhatsApp (or Telegram). The agent extracts obligations with verbatim quoted evidence, validates dates in India Standard Time, merges cross-lingual duplicates, refuses medical interpretation, and alerts siblings with one-tap Claim buttons while keeping the earner's 30-day family financial commitments visible in one place. When a task is completed, Saath immediately closes the loop by sending a warm Marathi confirmation message back to the parent across WhatsApp and Telegram.
+A parent sends a Marathi or Hindi voice note or bill photo over WhatsApp (or Telegram). The agent pulls out what needs doing, quotes the exact source text for every field, checks dates in India Standard Time, merges the same bill sent twice in different languages, and refuses to interpret medical reports. Siblings get an alert with a Claim button, and the board shows the total due in the next 30 days. When someone marks a task done, the parent gets a short Marathi message on WhatsApp and Telegram saying it's handled.
 
----
-
-## Architecture Diagram
+## Architecture
 
 ![Saath System Architecture](docs/architecture.svg)
 
----
+## The problem
 
-## Problem & Societal Impact
+Many Indian earners run two households from one phone while their parents, in another city, handle bills and paperwork on their own:
+- Indians aged 60+ are projected to pass 20% of the population by 2050 and outnumber children by 2046 (*UNFPA India Ageing Report 2023*).
+- 3 in 10 people aged 60+ live with none of their children: 5.7% live alone, 20.3% with a spouse only, and 5.7% with others only (*Longitudinal Ageing Study in India - LASI Wave 1*).
+- 48% of older Indians report difficulty with instrumental activities of daily living (IADLs), including paying bills and tracking expenses (*LASI*).
+- Only 39.6% of adults aged 60+ are literate (*LASI*), so the parent's side has to work by voice, in their own language.
+- Outstanding education loans grew ~40% in three years to ₹1.37 lakh crore in 2025 (*The Week, 2026*). An earner paying their own loan EMI is often also paying their parents' utility bills and insurance renewals.
 
-India's sole earners are running two households from one phone, while ageing parents struggle with remote admin:
-- **Rapidly Ageing Population:** Indians aged 60+ are projected to pass 20% of the population by 2050 and outnumber children by 2046 (*UNFPA India Ageing Report 2023*).
-- **Empty-Nest Households:** 3 in 10 people aged 60+ live with none of their children: 5.7% live alone, 20.3% with a spouse only, and 5.7% with others only (*Longitudinal Ageing Study in India - LASI Wave 1*).
-- **Daily Admin Difficulty:** 48% of older Indians report difficulty with instrumental activities of daily living (IADLs), including paying bills and tracking expenses (*LASI*).
-- **Literacy Barriers:** Only 39.6% of adults aged 60+ are literate (*LASI*), making a voice-first regional interface a necessity rather than a feature.
-- **Financial Dual-Burden:** Outstanding education loans grew ~40% in three years to ₹1.37 lakh crore in 2025 (*The Week, 2026*). Sole earners remotely managing their parents' utility bills and medical renewals must juggle these commitments alongside their own loan EMIs.
-
----
-
-## Meta AI Models Used
+## Meta models used
 
 | Model | Provider / Endpoint | Role in Saath |
 | :--- | :--- | :--- |
-| **Muse Voice Transcribe (`muse-voice-transcribe-1.0`)** | Baseten / Meta Model API (`POST /v1/asr/transcribe`) | Dedicated ASR transcribing 16 kHz mono WAV voice notes in spoken Marathi and Hindi with zero audio degradation. |
-| **Muse Spark Open (`meta-models/muse-spark-open-1026`)** | Baseten / Meta Model API (`POST /v1/chat/completions`) | Vision OCR on bill photos, semantic classification, entity extraction with verbatim quoted evidence, status inquiry intent classification, and drafted Marathi parent replies. |
+| **Muse Voice Transcribe (`muse-voice-transcribe-1.0`)** | Baseten / Meta Model API (`POST /v1/asr/transcribe`) | Transcribes Marathi and Hindi voice notes (16 kHz mono WAV). |
+| **Muse Spark Open (`meta-models/muse-spark-open-1026`)** | Baseten / Meta Model API (`POST /v1/chat/completions`) | Reads bill photos, classifies each message, extracts fields with source quotes, answers "what's the status?" questions, and drafts Marathi replies to parents. |
 
 *API endpoints and model names are configurable via `.env` (`LLM_BASE_URL`, `LLM_API_KEY`, `MUSE_SPARK_MODEL`, `MUSE_VOICE_MODEL`).*
 
----
-
-## Evaluation Benchmark (40 Items / 35 Test Cases)
+## Evaluation (40 items, 35 test cases)
 
 Evaluated against a synthetic 40-item benchmark (35 test cases) covering Marathi/Hindi utility bills, education loan notices, insurance renewals, voice notes, cross-lingual duplicate pairs (10 items / 5 pairs), and clinical lab reports. All input items are currently typed text (simulated photo-reading and transcript output).
 
@@ -51,9 +43,7 @@ Evaluated against a synthetic 40-item benchmark (35 test cases) covering Marathi
 
 > **Evaluation Transparency:** Running `python -m tests.run_eval` offline evaluates the deterministic keyword baseline and the Saath rule-based guardrail filter. To run live inference against Meta's `muse-spark-1.3` model, set `LLM_API_KEY` (Meta API) in your `.env`. Until the real run with the API key, the Muse Spark 1.3 column is marked as Pending in both the documentation and evaluation output rather than reporting unverified numbers.
 
----
-
-## Agent Graph & Human Confirmation Design
+## Agent graph and human confirmation
 
 ```text
 Parent Voice / Photo (WhatsApp / Telegram)
@@ -101,33 +91,28 @@ Parent Voice / Photo (WhatsApp / Telegram)
                                 END
 ```
 
-### Closing the Loop to Parents
-When a task is claimed and finished by a child via WhatsApp quick-reply buttons (`[Mark Done]`) or Telegram inline buttons (`[✔️ Mark Done / काम पूर्ण झाले]`) or the web board, Saath sends a warm Marathi notification directly to the parent across WhatsApp and Telegram:
+### Telling the parent it's done
+When a task is claimed and finished by a child via WhatsApp quick-reply buttons (`[Mark Done]`) or Telegram inline buttons (`[✔️ Mark Done / काम पूर्ण झाले]`) or the web board, Saath sends the parent this Marathi message on WhatsApp and Telegram:
 > *"🙏 नमस्कार! आनंदाची बातमी: तुमचे हे काम पूर्ण झाले आहे: महावितरण वीज बिल (₹1,840). काळजी करू नका, सर्व वेळेवर झाले आहे! 😊"*
 
-### Verbatim Quoted-Text Evidence
-Every field extracted by the agent must be accompanied by the **exact verbatim substring** from the OCR transcript. A non-LLM code verifier inspects each quote:
+### Source quotes for every field
+Every field the agent extracts must come with the exact substring it was read from. Plain code (not the model) checks each quote:
 - If a quote does not exist character-for-character in the raw text, the field is discarded (`null`).
 - Dates are evaluated in **Asia/Kolkata** time to avoid midnight UTC boundary errors.
 - Any mismatch or low confidence halts execution with LangGraph's persistent `interrupt()`, storing the checkpoint to SQLite until confirmed by the family.
 
----
+## Features
 
-## Core Flows & Features
+1. Parents send bills or voice notes in Marathi or Hindi over WhatsApp or Telegram. They don't install anything or read English.
+2. The board shows one total for everything due in the next 30 days, for example parents' electricity + insurance + the earner's education loan EMI = ₹49,640.
+3. Siblings claim a task (`[Claim Task]` / `[✅ Claim / मी करतो]`) or mark it done (`[Mark Done]` / `[✔️ Mark Done / पूर्ण झाले]`) with one tap in WhatsApp or Telegram. Only members of that household can act on its tasks.
+4. A blurry or low-confidence document pauses the agent and asks the family to confirm (`[Correct (होय)]`, `[Wrong (नाही)]`). The answer resumes the graph through LangGraph `Command(resume=...)`.
+5. Every agent step and every human answer is written to an append-only `events` table with a plain-language reason. The board's Audit Log button shows it.
+6. An hourly APScheduler job escalates tasks that are due within 3 days and still unclaimed. The board's "Skip 3 days" button triggers this on demand for demos.
 
-1. **Dual-Channel Voice & Photo Ingest:** Parents send bills or voice notes in Marathi/Hindi via WhatsApp or Telegram without downloading new apps or learning English interfaces.
-2. **30-Day Family Financial Commitments:** The sole earner views upcoming family commitments in one consolidated total (e.g., parents' electricity + insurance + earner's education loan EMI = **₹49,640**).
-3. **WhatsApp & Telegram Interactive Claim & Done Buttons:** Smartwatch-ready alerts allow siblings to claim tasks with a single tap (`[Claim Task]` / `[✅ Claim / मी करतो]`) or mark them done (`[Mark Done]` / `[✔️ Mark Done / पूर्ण झाले]`), with strict household authorization.
-4. **Closing the Loop to Parents:** When a task is marked done, elderly parents receive an instant reassurance message in Marathi on both WhatsApp and Telegram.
-5. **Persistent Interrupt & Human-in-the-Loop:** Blurry or low-confidence documents trigger interactive WhatsApp and Telegram confirmation buttons (`[Correct (होय)]`, `[Wrong (नाही)]`), resuming execution through LangGraph `Command(resume=...)`.
-6. **Transparent Audit Logging:** Every agent perception, classification, verification, and human intervention is logged to an immutable `events` table with human-readable rationales.
-7. **Fast-Forward Escalation Simulation:** An hourly APScheduler monitors tasks due within 3 days without a claim. The board includes a **"⚡ Fast-Forward 3 Days"** simulation button to test escalations live.
+## Running it locally
 
----
-
-## Quickstart & Local Setup
-
-### 1. Run with Docker (Recommended)
+### With Docker
 ```bash
 git clone https://github.com/PrathameshTawar/meta-hackthon-top-2000-all-over-the-world.git saath
 cd saath
@@ -136,7 +121,7 @@ docker compose up --build
 - Backend: `http://localhost:8000` (`/healthz`, `/docs`)
 - Frontend Family Board: `http://localhost:3000`
 
-### 2. Run Locally with Virtualenv
+### Without Docker
 
 #### Backend (FastAPI + LangGraph)
 ```bash
@@ -156,29 +141,27 @@ uvicorn app.main:app --reload --port 8000
 ```bash
 cd frontend
 npm install
+echo NEXT_PUBLIC_ADMIN_TOKEN=saath_admin_secret_demo > .env.local
 npm run dev
 ```
+The token must match the backend's `ADMIN_SECRET`. Without it, the Simulate, Skip 3 days and reset buttons get a 401.
 
-#### Run the 40-Item Benchmark (35 Test Cases)
+#### Benchmark
 ```bash
 cd backend
 python -m tests.run_eval
 ```
 
----
+## Limitations
 
-## Prototype Limitations & Scope
+- The board shows one household: `HOUSEHOLD_ID = 1` is hard-coded in `frontend/src/app/page.tsx`. The schema and API separate data by `household_id`, but there is no login yet, so the web board can't tell which sibling is using it.
+- Benchmark items are currently evaluated as typed text (simulated photo-reading and transcript output) for deterministic CI verification. Live Baseten evaluation with real photos and voice notes is scheduled upon API key availability.
+- Saath tracks deadlines and who is handling what. It never moves money or gives financial advice.
+- It refuses to interpret diagnostic reports or prescriptions and replies in Marathi telling the family to ask a doctor.
 
-- **Single-Household Demo Focus:** In `frontend/src/app/page.tsx`, `HOUSEHOLD_ID = 1` is hard-coded for hackathon presentation simplicity. The underlying schema and API are fully multi-tenant and isolate data by `household_id`.
-- **Simulated Inputs for Offline Testing:** Benchmark items are currently evaluated as typed text (simulated photo-reading and transcript output) for deterministic CI verification. Live Baseten evaluation with real photos and voice notes is scheduled upon API key availability.
-- **No Direct Financial Transactions:** Saath tracks deadlines, coordinates siblings, and organizes family commitments; it never initiates banking transactions or provides investment advice.
-- **Strict Medical Boundary:** Diagnostic reports and prescriptions are strictly refused with an empathetic Marathi message directing the family to qualified medical professionals.
+## WhatsApp message templates
 
----
-
-## Meta WhatsApp Message Templates Setup
-
-To reproduce the WhatsApp notifications in Meta Business Manager / WhatsApp Manager, create and submit these 4 message templates:
+Create these 4 templates in WhatsApp Manager to reproduce the notifications:
 
 | Template Name | Category | Language | Exact Body Wording & Parameters | Buttons / Payloads |
 | :--- | :--- | :--- | :--- | :--- |
@@ -187,20 +170,14 @@ To reproduce the WhatsApp notifications in Meta Business Manager / WhatsApp Mana
 | `saath_task_done` | UTILITY | Marathi (`mr`) | `नमस्कार! आनंदाची बातमी: तुमचे हे काम पूर्ण झाले आहे: {{1}}. पूर्ण करणारा: {{2}}. काळजी करू नका, सर्व वेळेवर झाले आहे!` | None (Informational loop closure) |
 | `saath_please_check` | UTILITY | English (US) (`en_US`) | `Please check extracted obligation details: {{1}}. Is this accurate?` | Button 0: `Correct (होय)` (`confirm_yes:<artifact_id>`), Button 1: `Wrong (नाही)` (`confirm_no:<artifact_id>`) |
 
-> **Key Template Implementation Notes:**
-> 1. **No Line Breaks:** Meta rejects template parameter values with newline characters (`\r` or `\n`). The backend sanitizes all parameters before transmission via `_clean_template_param`.
-> 2. **Explicit Language Mapping:** Sibling alerts (`saath_new_task`, `saath_task_escalation`, `saath_please_check`) use `en_US` matching approved English templates. Parent completion notices (`saath_task_done`) use `mr` (Marathi).
-> 3. **Quick-Reply Template Buttons:** Outside WhatsApp's 24-hour customer service window, sibling alerts and verification questions are dispatched via approved templates with quick-reply payloads (`claim:<task_id>`, `confirm_yes:<artifact_id>`, `confirm_no:<artifact_id>`). Meta delivers these as `msg["type"] == "button"` containing `msg["button"]["payload"]`, which Saath parses and processes with identical household isolation and deduplication as regular interactive buttons.
+> Notes:
+> 1. Meta rejects template parameter values with newline characters (`\r` or `\n`). The backend sanitizes all parameters before transmission via `_clean_template_param`.
+> 2. Sibling alerts (`saath_new_task`, `saath_task_escalation`, `saath_please_check`) use `en_US` matching approved English templates. Parent completion notices (`saath_task_done`) use `mr` (Marathi).
+> 3. Outside WhatsApp's 24-hour customer service window, sibling alerts and verification questions are dispatched via approved templates with quick-reply payloads (`claim:<task_id>`, `confirm_yes:<artifact_id>`, `confirm_no:<artifact_id>`). Meta delivers these as `msg["type"] == "button"` containing `msg["button"]["payload"]`, which Saath parses and processes with identical household isolation and deduplication as regular interactive buttons.
 
----
+## Author
 
-## Authorship & Team
-
-- **Submitted by / Sole Developer:** Prathamesh Taware ([@PrathameshTawar](https://github.com/PrathameshTawar))
-- **Email:** `tawareprathamesh7@gmail.com`
-- **Hackathon Status:** Solo entrant for Meta Global AI Developer Hackathon 2026, matching GitHub commit author and repository ownership.
-
----
+Prathamesh Taware ([@PrathameshTawar](https://github.com/PrathameshTawar)), solo entry, `tawareprathamesh7@gmail.com`
 
 ## License
-Built for the **Meta Global AI Developer Hackathon 2026**. Open source under the MIT License.
+MIT. Built for the Meta Global AI Developer Hackathon 2026.

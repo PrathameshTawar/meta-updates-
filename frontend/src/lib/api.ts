@@ -2,7 +2,14 @@ import axios from "axios";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-export const api = axios.create({ baseURL: BASE });
+// shortcut: a NEXT_PUBLIC_ token ships in the browser bundle, so it only keeps out casual
+// callers; put the admin routes behind real auth before this runs anywhere public.
+const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_TOKEN;
+
+export const api = axios.create({
+  baseURL: BASE,
+  headers: ADMIN_TOKEN ? { "X-Admin-Token": ADMIN_TOKEN } : {},
+});
 
 // ---------------------------------------------------------------------------
 // Types (mirroring backend Pydantic schemas)

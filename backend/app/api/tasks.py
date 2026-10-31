@@ -46,7 +46,7 @@ class TaskOut(BaseModel):
 
 
 class TaskUpdate(BaseModel):
-    status: Optional[str] = None
+    status: Optional[TaskStatus] = None
     assignee_id: Optional[int] = None
 
 
@@ -93,7 +93,8 @@ async def update_task(task_id: int, update: TaskUpdate, db: AsyncSession = Depen
         task.assignee_id = update.assignee_id
     task.updated_at = datetime.utcnow()
     await db.commit()
-    await db.refresh(task)
+    # Load evidence_items eagerly; a lazy load during response serialization fails under async.
+    await db.refresh(task, attribute_names=["evidence_items"])
 
     if status_changed_to_done:
         try:

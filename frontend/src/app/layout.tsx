@@ -7,8 +7,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Saath (साथ) — Family Coordination Board",
-  description: "Coordinate ageing parents' bills, pensions, and obligations across cities",
+  title: "Saath (साथ) · Family board",
+  description: "Parents send bills and voice notes on WhatsApp. Their children see one shared task list.",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",
@@ -19,9 +19,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="apple-touch-icon" href="/icon.svg" />
-      </head>
       <body>
         <Providers>{children}</Providers>
         <script

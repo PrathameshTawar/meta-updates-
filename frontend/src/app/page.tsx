@@ -7,9 +7,8 @@ const HOUSEHOLD_ID = 1;
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Logo mark */}
           <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold text-sm">
             स
           </div>
@@ -17,7 +16,7 @@ export default function HomePage() {
             Saath <span className="text-gray-400 font-normal text-sm">/ साथ</span>
           </span>
         </div>
-        <span className="text-xs text-gray-400">Family coordination board</span>
+        <span className="hidden sm:inline text-xs text-gray-400">Shared list of your parents' bills and paperwork</span>
       </header>
 
       <Board householdId={HOUSEHOLD_ID} />
