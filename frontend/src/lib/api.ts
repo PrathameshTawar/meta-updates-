@@ -6,6 +6,9 @@ const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // callers; put the admin routes behind real auth before this runs anywhere public.
 const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_TOKEN;
 
+// shortcut: one demo household; derive it from the logged-in user once there is a login.
+export const HOUSEHOLD_ID = 1;
+
 export const api = axios.create({
   baseURL: BASE,
   headers: ADMIN_TOKEN ? { "X-Admin-Token": ADMIN_TOKEN } : {},
@@ -50,6 +53,7 @@ export interface Member {
   role: "parent" | "child" | "helper";
   telegram_id: string | null;
   categories_owned: string[];
+  phone_last4: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,6 +68,16 @@ export const updateTask = (taskId: number, patch: Partial<Pick<Task, "status" | 
 
 export const getMembers = (householdId: number) =>
   api.get<Member[]>(`/members/${householdId}`).then((r) => r.data);
+
+export const addChild = (householdId: number, name: string, phone: string) =>
+  api
+    .post<Member>("/members/", { household_id: householdId, name, role: "child", phone })
+    .then((r) => r.data);
+
+export const removeMember = (memberId: number) => api.delete(`/members/${memberId}`);
+
+export const statusOf = (err: unknown) =>
+  (err as { response?: { status?: number } })?.response?.status;
 
 export interface EventItem {
   id: number;
@@ -85,7 +99,7 @@ export const simulateEscalation = (daysAhead: number = 3) =>
   }).then((r) => r.data);
 
 export const simulateIngest = (data: { type: string; raw_text: string; household_id?: number }) =>
-  api.post("/admin/ingest/simulate", { household_id: 1, ...data }).then((r) => r.data);
+  api.post("/admin/ingest/simulate", { household_id: HOUSEHOLD_ID, ...data }).then((r) => r.data);
 
 export const resetDatabase = () =>
   api.post("/admin/reset").then((r) => r.data);

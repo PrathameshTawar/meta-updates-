@@ -375,3 +375,19 @@ async def test_dedupe_matches_devanagari_and_decimal_amounts():
     d_mar = await node_deduplicate({"household_id": 1, "extracted": {**base, "amount": {"value": "₹१,८४०"}}})
     d_eng = await node_deduplicate({"household_id": 1, "extracted": {**base, "amount": {"value": "Rs. 1,840.00"}}})
     assert d_mar["dedupe_key"] == d_eng["dedupe_key"]
+
+
+@pytest.mark.asyncio
+async def test_verify_needs_amount_or_due_date():
+    """Payee and title alone (always fillable from the first line) must not pass verification."""
+    state: AgentState = {
+        "raw_text": "M@h@v1t@r@n B1|| smudged",
+        "extracted": {
+            "payee": {"value": "M@h@v1t@r@n B1|| smudged", "quote": "M@h@v1t@r@n B1|| smudged"},
+            "title": {"value": "M@h@v1t@r@n B1|| smudged", "quote": "M@h@v1t@r@n B1|| smudged"},
+        },
+        "confidence": 0.5,
+    }
+    v_res = await node_verify(state)
+    assert v_res["verify_passed"] is False
+    assert "no amount or due date found" in v_res["verify_failures"]

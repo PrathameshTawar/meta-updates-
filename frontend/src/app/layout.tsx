@@ -7,7 +7,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Saath (साथ) · Family board",
+  title: "Saath (साथ)",
   description: "Parents send bills and voice notes on WhatsApp. Their children see one shared task list.",
   manifest: "/manifest.json",
   icons: {

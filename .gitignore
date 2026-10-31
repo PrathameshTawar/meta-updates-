@@ -28,3 +28,7 @@ Thumbs.db
 # Planning scratch files
 saath.md
 *.docx
+
+# Runtime data
+backend/data/
+*.tsbuildinfo

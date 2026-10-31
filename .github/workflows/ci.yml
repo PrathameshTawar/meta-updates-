@@ -32,4 +32,4 @@ jobs:
 
       - name: Run unit & regression tests
         run: |
-          pytest tests/test_agent_pipeline.py -v
+          pytest tests/ -v

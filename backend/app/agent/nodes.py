@@ -773,8 +773,9 @@ Text:
                 "parent_reply": "आम्हाला ही माहिती स्पष्टपणे वाचता आली नाही, कृपया पुन्हा पाठवा.",
             }
     else:
-        # No API key configured: do NOT fake model extraction
-        extracted = {}
+        # No API key: use the keyword rules (the eval's baseline). They also return verbatim
+        # quotes, and the audit log below says these rules were used, not the model.
+        extracted = _heuristic_extract(raw_text)
 
     # Compute confidence: fraction of key fields with both value and verbatim quote
     fields = ["amount", "due_date", "payee", "title"]
@@ -789,7 +790,8 @@ Text:
         household_id=state.get("household_id"),
         actor="agent:extract",
         action="extracted",
-        reason=f"Extracted {filled}/4 fields with supporting quotes",
+        reason=f"Extracted {filled}/4 fields with supporting quotes"
+        + ("" if settings.get_api_key() else " (keyword rules: no model API key set)"),
         payload={
             "artifact_id": state["artifact_id"],
             "fields": list(extracted.keys()),
@@ -848,6 +850,11 @@ async def node_verify(state: AgentState) -> dict:
             ))
             if digits and digits not in quote_digits:
                 failures.append(f"amount digits {digits} not in quote {quote}")
+
+    # Payee and title can always be filled from the first line, so on their own they don't
+    # show the agent read anything. Something actionable (an amount or a date) must be there.
+    if not any((extracted.get(f) or {}).get("value") for f in ("amount", "due_date")):
+        failures.append("no amount or due date found")
 
     confidence = state.get("confidence", 0.0)
     verify_passed = len(failures) == 0 and confidence >= 0.5

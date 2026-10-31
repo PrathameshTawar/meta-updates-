@@ -7,7 +7,7 @@ from typing import Optional
 from datetime import datetime
 
 from app.db.session import get_db
-from app.db.models import Task, TaskStatus, Evidence
+from app.db.models import Task, TaskStatus, Evidence, Member
 from app.api.admin import verify_admin_auth
 
 router = APIRouter()
@@ -97,6 +97,9 @@ async def update_task(
             status_changed_to_done = True
         task.status = new_status
     if update.assignee_id is not None:
+        assignee = await db.get(Member, update.assignee_id)
+        if not assignee or assignee.household_id != task.household_id:
+            raise HTTPException(status_code=400, detail="Assignee is not in this task's household")
         task.assignee_id = update.assignee_id
     task.updated_at = datetime.utcnow()
     await db.commit()

@@ -9,6 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        ink: "#1A2433",
         brand: {
           50:  "#fdf4e7",
           100: "#fae3be",
@@ -18,8 +19,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui"],
-        devanagari: ["Noto Sans Devanagari", "sans-serif"],
+        // Mukta covers Devanagari and Latin in one family, so Marathi and English match.
+        sans: ["Mukta", "ui-sans-serif", "system-ui"],
       },
     },
   },

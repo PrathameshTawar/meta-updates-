@@ -28,7 +28,7 @@ Many Indian earners run two households from one phone while their parents, in an
 | **Muse Voice Transcribe (`muse-voice-transcribe-1.0`)** | Meta Model API (`POST /v1/asr/transcribe`) | Transcribes Marathi and Hindi voice notes (16 kHz mono WAV). |
 | **Muse Spark (`muse-spark-1.3`)** | Meta Model API (`POST /v1/chat/completions`) | Reads bill photos, classifies each message, extracts fields with source quotes, answers "what's the status?" questions, and drafts Marathi replies to parents. |
 
-*The defaults point at `https://api.meta.ai/v1`. To use Baseten instead, set `LLM_BASE_URL=https://inference.baseten.co/v1` and `MUSE_SPARK_MODEL=meta-models/muse-spark-open-1026`. Endpoints and model names are configurable via `.env` (`LLM_BASE_URL`, `LLM_API_KEY`, `MUSE_SPARK_MODEL`, `MUSE_VOICE_MODEL`).*
+*Without `LLM_API_KEY`, extraction falls back to the keyword rules (the evaluation's baseline), and the audit log says so on every message. The defaults point at `https://api.meta.ai/v1`. To use Baseten instead, set `LLM_BASE_URL=https://inference.baseten.co/v1` and `MUSE_SPARK_MODEL=meta-models/muse-spark-open-1026`. Endpoints and model names are configurable via `.env` (`LLM_BASE_URL`, `LLM_API_KEY`, `MUSE_SPARK_MODEL`, `MUSE_VOICE_MODEL`).*
 
 ## Evaluation (40 items, 35 test cases)
 
@@ -102,6 +102,14 @@ Every field the agent extracts must come with the exact substring it was read fr
 - Dates are evaluated in **Asia/Kolkata** time to avoid midnight UTC boundary errors.
 - Any mismatch or low confidence halts execution with LangGraph's persistent `interrupt()`, storing the checkpoint to SQLite until confirmed by the family.
 
+## Screens
+
+- `/parent` is for Aai and Baba: Marathi, large text and buttons. They see each task and which child is handling it, can speak (Chrome's voice typing, `mr-IN`) or type a new bill, and can add or remove the children who get alerts. A child needs a mobile number, because that is where WhatsApp alerts go.
+- `/family` is for the children: what nobody has taken yet, what you're handling, what your siblings are handling, and the 30-day total. "I'll handle it" assigns the task to you.
+- `/board` is the full kanban board with the demo tools (simulate a message, skip 3 days, audit log, reset).
+
+Who is using the screen is picked once per browser. There is no login yet.
+
 ## Features
 
 1. Parents send bills or voice notes in Marathi or Hindi over WhatsApp or Telegram. They don't install anything or read English.
@@ -120,7 +128,7 @@ cd saath
 docker compose up --build
 ```
 - Backend: `http://localhost:8000` (`/healthz`, `/docs`)
-- Frontend Family Board: `http://localhost:3000`
+- Frontend: `http://localhost:3000` (parent and children screens; `/board` for the full board)
 
 ### Without Docker
 
