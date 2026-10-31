@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import struct
+import unicodedata
 import subprocess
 import wave
 from datetime import datetime, timezone, timedelta
@@ -181,6 +182,13 @@ async def _log_event(
 # ---------------------------------------------------------------------------
 # Verbatim Code-Based Heuristics (Zero-Hallucination Fallback)
 # ---------------------------------------------------------------------------
+
+def _amount_digits(text: str) -> str:
+    """Whole-rupee digits of the first number in text, as ASCII: "₹१,८४०" and "Rs. 1,840.00" -> "1840"."""
+    ascii_text = "".join(str(unicodedata.digit(c)) if c.isdigit() else c for c in str(text))
+    match = re.search(r"\d[\d,]*", ascii_text)
+    return match.group().replace(",", "") if match else ""
+
 
 def _heuristic_extract(raw_text: str) -> dict:
     """
@@ -816,8 +824,10 @@ async def node_verify(state: AgentState) -> dict:
         if value is None:
             continue
 
-        # Check 1: Quote must appear verbatim in raw_text
-        if quote and quote not in raw_text:
+        # Check 1: Quote must exist and appear verbatim in raw_text
+        if not quote:
+            failures.append(f"{field}: no source quote given")
+        elif quote not in raw_text:
             failures.append(f"{field}: quote not found verbatim in source text")
 
         # Check 2: Date validity and not in past
@@ -831,8 +841,11 @@ async def node_verify(state: AgentState) -> dict:
 
         # Check 3: Amount digits must match quote digits
         if field == "amount" and value and quote:
-            digits = re.sub(r"[^\d]", "", str(value))
-            quote_digits = re.sub(r"[^\d]", "", str(quote))
+            # Compare as ASCII so a Marathi quote (₹१,८४०) matches an English value (₹1,840).
+            digits = _amount_digits(value)
+            quote_digits = re.sub(r",", "", "".join(
+                str(unicodedata.digit(c)) if c.isdigit() else c for c in str(quote)
+            ))
             if digits and digits not in quote_digits:
                 failures.append(f"amount digits {digits} not in quote {quote}")
 
@@ -882,7 +895,7 @@ async def node_deduplicate(state: AgentState) -> dict:
     amount = (extracted.get("amount") or {}).get("value") or ""
     due_date_raw = (extracted.get("due_date") or {}).get("value") or ""
 
-    amount_norm = re.sub(r"[^\d]", "", amount)
+    amount_norm = _amount_digits(amount)
     due_month = due_date_raw[:7] if len(due_date_raw) >= 7 else due_date_raw
 
     payee_lower = payee.lower()
